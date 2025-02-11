@@ -16,7 +16,8 @@
     <h3>Estadísticas</h3>
     <div id="stats"></div>  <!-- Aquí mostraremos las estadísticas de las respuestas -->
     
-    <table id="dataTable"></table>
+    <!-- Hemos eliminado la tabla con id "dataTable" -->
+    <!-- <table id="dataTable"></table> -->
 
     <script>
         async function fetchData() {
@@ -26,17 +27,6 @@
 
             // Convertir los datos CSV en una matriz de filas
             const rows = text.split("\n").map(row => row.split(","));
-
-            // Mostrar los datos en la tabla
-            let tableHTML = "<tr>";
-            rows[0].forEach(header => tableHTML += `<th>${header}</th>`);
-            tableHTML += "</tr>";
-            for (let i = 1; i < rows.length; i++) {
-                tableHTML += "<tr>";
-                rows[i].forEach(cell => tableHTML += `<td>${cell}</td>`);
-                tableHTML += "</tr>";
-            }
-            document.getElementById("dataTable").innerHTML = tableHTML;
 
             // Calcular estadísticas
             const stats = calculateStats(rows);
