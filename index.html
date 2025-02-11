@@ -12,6 +12,10 @@
 </head>
 <body>
     <h2>Datos de Google Forms</h2>
+    
+    <h3>Estadísticas</h3>
+    <div id="stats"></div>  <!-- Aquí mostraremos las estadísticas de las respuestas -->
+    
     <table id="dataTable"></table>
 
     <script>
@@ -20,18 +24,125 @@
             const response = await fetch(url);
             const text = await response.text();
 
+            // Convertir los datos CSV en una matriz de filas
             const rows = text.split("\n").map(row => row.split(","));
+
+            // Mostrar los datos en la tabla
             let tableHTML = "<tr>";
             rows[0].forEach(header => tableHTML += `<th>${header}</th>`);
             tableHTML += "</tr>";
-
             for (let i = 1; i < rows.length; i++) {
                 tableHTML += "<tr>";
                 rows[i].forEach(cell => tableHTML += `<td>${cell}</td>`);
                 tableHTML += "</tr>";
             }
-
             document.getElementById("dataTable").innerHTML = tableHTML;
+
+            // Calcular estadísticas
+            const stats = calculateStats(rows);
+            displayStats(stats);
+        }
+
+        // Función para contar las respuestas
+        function countAnswers(rows) {
+            return rows.length - 1;  // Número de respuestas, excluyendo la cabecera
+        }
+
+        // Función para calcular estadísticas detalladas
+        function calculateStats(rows) {
+            const stats = {
+                totalResponses: countAnswers(rows),
+                universities: {}
+            };
+
+            // Recorremos las filas y procesamos los datos
+            for (let i = 1; i < rows.length; i++) {
+                const university = rows[i][1];  // Columna B: Universidad
+                const year = rows[i][2];        // Columna C: Año de egreso
+                const cmn = parseFloat(rows[i][5]); // Columna F: CMN
+                const grade = parseFloat(rows[i][4]); // Columna E: Nota
+                const eunacom = parseFloat(rows[i][3]); // Columna D: Puntaje EUNACOM
+
+                if (!stats.universities[university]) {
+                    stats.universities[university] = {
+                        totalCMN: 0,
+                        totalGrade: 0,
+                        totalEunacom: 0,
+                        count: 0,
+                        years: {}
+                    };
+                }
+
+                // Acumulamos los totales
+                stats.universities[university].totalCMN += cmn || 0;
+                stats.universities[university].totalGrade += grade || 0;
+                stats.universities[university].totalEunacom += eunacom || 0;
+                stats.universities[university].count++;
+
+                if (!stats.universities[university].years[year]) {
+                    stats.universities[university].years[year] = {
+                        totalCMN: 0,
+                        totalGrade: 0,
+                        totalEunacom: 0,
+                        count: 0
+                    };
+                }
+
+                // Acumulamos los totales por año de egreso
+                stats.universities[university].years[year].totalCMN += cmn || 0;
+                stats.universities[university].years[year].totalGrade += grade || 0;
+                stats.universities[university].years[year].totalEunacom += eunacom || 0;
+                stats.universities[university].years[year].count++;
+            }
+
+            // Calcular promedios
+            for (const university in stats.universities) {
+                const uniStats = stats.universities[university];
+                uniStats.avgCMN = uniStats.totalCMN / uniStats.count;
+                uniStats.avgGrade = uniStats.totalGrade / uniStats.count;
+                uniStats.avgEunacom = uniStats.totalEunacom / uniStats.count;
+
+                for (const year in uniStats.years) {
+                    const yearStats = uniStats.years[year];
+                    yearStats.avgCMN = yearStats.totalCMN / yearStats.count;
+                    yearStats.avgGrade = yearStats.totalGrade / yearStats.count;
+                    yearStats.avgEunacom = yearStats.totalEunacom / yearStats.count;
+                }
+            }
+
+            return stats;
+        }
+
+        // Mostrar las estadísticas en la página
+        function displayStats(stats) {
+            let statsHTML = `<ul>
+                <li>Total de respuestas: ${stats.totalResponses}</li>
+            </ul>`;
+
+            for (const university in stats.universities) {
+                const uniStats = stats.universities[university];
+                statsHTML += `
+                    <h4>Universidad: ${university}</h4>
+                    <ul>
+                        <li>Promedio de CMN: ${uniStats.avgCMN.toFixed(2)}</li>
+                        <li>Promedio de Notas: ${uniStats.avgGrade.toFixed(2)}</li>
+                        <li>Promedio de Puntaje EUNACOM: ${uniStats.avgEunacom.toFixed(2)}</li>
+                    </ul>`;
+
+                // Mostrar estadísticas por año de egreso
+                for (const year in uniStats.years) {
+                    const yearStats = uniStats.years[year];
+                    statsHTML += `
+                        <h5>Año de Egreso: ${year}</h5>
+                        <ul>
+                            <li>Promedio de CMN: ${yearStats.avgCMN.toFixed(2)}</li>
+                            <li>Promedio de Notas: ${yearStats.avgGrade.toFixed(2)}</li>
+                            <li>Promedio de Puntaje EUNACOM: ${yearStats.avgEunacom.toFixed(2)}</li>
+                        </ul>`;
+                }
+            }
+
+            document.getElementById("stats").innerHTML = statsHTML;
         }
 
         fetchData();
