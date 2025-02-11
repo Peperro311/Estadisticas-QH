@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas</title>
+    <style>
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h2>Datos de Google Forms</h2>
+    <table id="dataTable"></table>
+
+    <script>
+        async function fetchData() {
+            const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZIXsjMz4SzWH0hz0qJqo9-B5YyYuek9K_jt1I0Q2GYpr70Mz4YJkPmP5Ij8EmmEY6AeHPPpJezRKo/pub?output=csv";
+            const response = await fetch(url);
+            const text = await response.text();
+
+            const rows = text.split("\n").map(row => row.split(","));
+            let tableHTML = "<tr>";
+            rows[0].forEach(header => tableHTML += `<th>${header}</th>`);
+            tableHTML += "</tr>";
+
+            for (let i = 1; i < rows.length; i++) {
+                tableHTML += "<tr>";
+                rows[i].forEach(cell => tableHTML += `<td>${cell}</td>`);
+                tableHTML += "</tr>";
+            }
+
+            document.getElementById("dataTable").innerHTML = tableHTML;
+        }
+
+        fetchData();
+    </script>
+</body>
+</html>
